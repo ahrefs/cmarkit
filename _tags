@@ -1,5 +1,7 @@
 true : bin_annot, safe_string
 <_b0> : -traverse
+<src/*> and not <src/cmarkit_pervasives.*> : open(Cmarkit_pervasives)
+<src/cmarkit_pervasives.*> : package(extlib)
 <src> : include
 <test/test*> : package(b0.std b0.b00.kit)
 <test/spec*> : package(b0.std b0.b00.kit)
