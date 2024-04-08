@@ -1,6 +1,6 @@
 description = "CommonMark parser and renderer for OCaml"
 version = "%%VERSION_NUM%%"
-requires = ""
+requires = "extlib"
 archive(byte) = "cmarkit.cma"
 archive(native) = "cmarkit.cmxa"
 plugin(byte) = "cmarkit.cma"
