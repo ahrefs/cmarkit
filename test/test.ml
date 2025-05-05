@@ -17,8 +17,24 @@ let test_mapper_table_bug_14 () =
   print_endline (Cmarkit_commonmark.of_doc mdoc);
   ()
 
+let test_inline_normalize () =
+  let open Cmarkit in
+  let m n = n, Meta.none in
+
+  let inline = Inline.Inlines (m [
+    Inline.Text (m "a");
+    Inline.Text (m "b");
+    Inline.Text (m "c");
+    Inline.Text (m "d");
+  ]) in
+  let normalized = Inline.normalize inline in
+  let block = Block.Paragraph (m (Block.Paragraph.make normalized)) in
+  let doc = Doc.make block in
+  Printf.printf "Normalized: %s\n" (Cmarkit_commonmark.of_doc doc)
+
 let main () =
   test_mapper_table_bug_14 ();
+  test_inline_normalize ();
   ()
 
 let () = if !Sys.interactive then () else main ()

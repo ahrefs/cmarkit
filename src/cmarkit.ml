@@ -359,6 +359,13 @@ module Inline = struct
   | Ext_strikethrough (_, m) -> m | Ext_math_span (_, m) -> m
   | i -> ext i
 
+  let take_drop_while p l =
+    let rec loop acc = function
+    | [] -> List.rev acc, []
+    | x :: tail -> if p x then loop (x :: acc) tail else List.rev acc, l
+    in
+    loop [] l
+
   let rec normalize ?(ext = ext_none) = function
   | Autolink _ | Break _ | Code_span _ | Raw_html _ | Text _
   | Inlines ([], _) | Ext_math_span _ as i -> i
@@ -372,14 +379,12 @@ module Inline = struct
   | Inlines (i :: is, m) ->
       let rec loop acc = function
       | Inlines (is', m) :: is -> loop acc (List.rev_append (List.rev is') is)
-      | Text (t', m') as i' :: is ->
-          begin match acc with
-          | Text (t, m) :: acc ->
-              let tl = Textloc.span (Meta.textloc m) (Meta.textloc m') in
-              let i = Text (t ^ t', Meta.with_textloc ~keep_id:true m tl) in
-              loop (i :: acc) is
-          | _ -> loop (normalize ~ext i' :: acc) is
-          end
+      | Text (t', m') :: is ->
+          let texts, is' = take_drop_while (function Text _ -> true | _ -> false) is in
+          let t = String.concat "" (t' :: List.map (function Text (t, _) -> t | _ -> assert false) texts) in
+          let tl = List.fold_left (fun tl i -> match i with Text (_, i) -> Textloc.span tl (Meta.textloc i) | _ -> assert false) (Meta.textloc m') texts in
+          let i = Text (t, Meta.with_textloc ~keep_id:true m tl) in
+          loop (i :: acc) is'
       | i :: is -> loop (normalize ~ext i :: acc) is
       | [] -> List.rev acc
       in
