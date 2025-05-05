@@ -376,7 +376,7 @@ module Inline = struct
       Emphasis ({ e with inline = normalize ~ext e.inline}, m)
   | Strong_emphasis (e, m) ->
       Strong_emphasis ({ e with inline = normalize ~ext e.inline}, m)
-  | Inlines (i :: is, m) ->
+  | Inlines (is, m) ->
       let rec loop acc = function
       | Inlines (is', m) :: is -> loop acc (List.rev_append (List.rev is') is)
       | Text (t', m') :: is ->
@@ -388,7 +388,7 @@ module Inline = struct
       | i :: is -> loop (normalize ~ext i :: acc) is
       | [] -> List.rev acc
       in
-      let is = loop [normalize ~ext i] is in
+      let is = loop [] is in
       (match is with [i] -> i | _ -> Inlines (is, m))
   | Ext_strikethrough (i, m) -> Ext_strikethrough (normalize ~ext i, m)
   | i -> ext i
