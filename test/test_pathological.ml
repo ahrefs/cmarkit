@@ -128,8 +128,8 @@ let dump_tests dir =
   let dump_test dir t i =
     let name = Fmt.str "patho-test-%02d" i in
     let force = true and make_path = true in
-    let src = Fpath.(dir / name + ".md") in
-    let exp = Fpath.(dir / name + ".exp") in
+    let src = Filepath.(dir / name + ".md") in
+    let exp = Filepath.(dir / name + ".exp") in
     let* () = Os.File.write ~force ~make_path src t.i in
     let* () = Os.File.write ~force ~make_path exp t.exp in
     Ok (i + 1)
@@ -196,7 +196,7 @@ let timeout_s =
 
 let dump =
   let doc = "Do not test, dump the tests to directory $(docv)" in
-  Arg.(value & opt (some B0_std_cli.dirpath) None & info ["dump"] ~doc)
+  Arg.(value & opt (some B0_std_cli.dir) None & info ["dump"] ~doc)
 
 let cli_arg ~docv =
   let completion = Arg.Completion.complete_restart in

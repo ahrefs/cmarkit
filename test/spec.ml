@@ -36,7 +36,7 @@ let parse_tests file =
            mem "section" string)
   in
   let* data = Os.File.read file in
-  let* json = Json.of_string ~file:(Fpath.to_string file) data in
+  let* json = Json.of_string ~file:(Filepath.to_string file) data in
   let tests = Jsonq.array testq in
   Jsonq.query tests json
 
@@ -82,5 +82,5 @@ let ids =
 
 let file =
   let doc = "$(docv) is the test file." in
-  let default = Fpath.v "test/spec.json" in
-  Cmdliner.Arg.(value & opt B0_std_cli.filepath default & info ["file"] ~doc)
+  let default = Filepath.v "test/spec.json" in
+  Cmdliner.Arg.(value & opt B0_std_cli.file default & info ["file"] ~doc)

@@ -93,7 +93,7 @@ let test_cmarkit_tool =
   let env env _ =
     let* exe = B0_env.unit_exe_file env cmarkit_tool in
     let env = B0_env.build_env env in
-    Ok (Os.Env.add "B0_TESTING_CMARKIT" (Fpath.to_string exe) env)
+    Ok (Os.Env.add "B0_TESTING_CMARKIT" (Filepath.to_string exe) env)
   in
   let meta =
     B0_meta.empty

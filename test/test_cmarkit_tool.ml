@@ -9,13 +9,13 @@ open B0_testing
 
 let args = Test.Arg.make ()
 
-let src_in ~cwd src = Fpath.drop_strict_prefix ~prefix:cwd src |> Option.get
+let src_in ~cwd src = Filepath.drop_strict_prefix ~prefix:cwd src |> Option.get
 let snap_stdout ~cwd cmd ~ext src =
-  let with_exts = Fpath.has_ext ".exts.md" src in
+  let with_exts = Filepath.has_ext ".exts.md" src in
   let cmd =
     Cmd.(cmd %% if' with_exts (arg "--exts") %% path (src_in ~cwd src))
   in
-  Snap.stdout ~cwd ~trim:false cmd !@ Fpath.(src -+ ext) ~__POS__
+  Snap.stdout ~cwd ~trim:false cmd !@ Filepath.(src -+ ext) ~__POS__
 
 let test_html =
   Test.test' args "html -c --unsafe" @@ fun (cmarkit, cwd, srcs) ->
@@ -61,7 +61,7 @@ let get_srcs dir =
     Os.Dir.contents ~kind:`Files ~dotfiles ~follow_symlinks ~recurse dir
   in
   let is_src f =
-    let ext = Fpath.take_ext ~multi:true f in
+    let ext = Filepath.take_ext ~multi:true f in
     ext = ".md" || ext = ".exts.md"
   in
   Ok (List.filter is_src files)
@@ -70,7 +70,7 @@ let main () =
   Test.main @@ fun () ->
   Test.error_to_failstop @@
   let* cmd = get_cmarkit_cmd () in
-  let snapshot_dir = Fpath.(Test.dir () / "snapshots") in
+  let snapshot_dir = Filepath.(Test.dir () / "snapshots") in
   let* srcs = get_srcs snapshot_dir in
   let args = Test.Arg.[value args (cmd, snapshot_dir, srcs)] in
   Ok (Test.autorun ~args ())

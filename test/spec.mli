@@ -25,7 +25,7 @@ type test =
 val pp_test_url : test Fmt.t
 (** [pp_test_url] formats an URL that points to the test. *)
 
-val parse_tests : Fpath.t -> (test list, string) result
+val parse_tests : Filepath.t -> (test list, string) result
 (** [parse_tests f] parses the specification JSON test file. *)
 
 val select : test list -> id list -> test list * string
@@ -39,7 +39,7 @@ val test_examples : label:string -> test list -> (test -> unit) -> unit
 
 (** {1:cli Command line} *)
 
-val file : Fpath.t Cmdliner.Term.t
+val file : Filepath.t Cmdliner.Term.t
 (** [file] are options to specify the jsont test file. *)
 
 val ids : id list Cmdliner.Term.t
