@@ -1538,44 +1538,29 @@ module Inline_struct = struct
     in
     loop toks start_line 0 []
 
-  let try_link_def
-      p ~start ~start_toks ~start_line ~toks ~line ~text_last ~image text
+  let find_link_def
+      p ~start ~start_toks ~start_line ~toks ~line ~text_last ~image
     =
     let next = text_last + 1 in
-    let link =
-      if next > line.last
-      then try_shortcut_reflink p start_toks start_line ~image ~start else
-      match p.i.[next] with
-      | '(' ->
-          (match try_inline_link_remainder p toks line ~image ~start:next with
-          | None -> try_shortcut_reflink p start_toks start_line ~image ~start
-          | Some _ as v -> v)
-      | '[' ->
-          let next' = next + 1 in
-          if next' <= line.last && p.i.[next'] = ']'
-          then try_collapsed_reflink p start_toks start_line ~image ~start else
-          let r = try_full_reflink_remainder p toks line ~image ~start:next in
-          begin match r with
-          | None -> try_shortcut_reflink p start_toks start_line ~image ~start
-          | Some None -> None (* Example 570 *)
-          | Some (Some _ as v) -> v
-          end
-      | c ->
-          try_shortcut_reflink p start_toks start_line ~image ~start
-    in
-    match link with
-    | None -> None
-    | Some (toks, endline, reference, last) ->
-        let first = start in
-        let text =
-          let first_line = start_line and last_line = line in
-          inlines_inline p text ~first ~last:text_last ~first_line ~last_line
-        in
-        let link = { Inline.Link.text; reference } in
-        let first_line = start_line and last_line = endline in
-        let t = link_token p ~image ~first ~last ~first_line ~last_line link in
-        let had_link = not image && not p.nested_links in
-        Some (toks, endline, t, had_link)
+    if next > line.last
+    then try_shortcut_reflink p start_toks start_line ~image ~start else
+    match p.i.[next] with
+    | '(' ->
+        (match try_inline_link_remainder p toks line ~image ~start:next with
+        | None -> try_shortcut_reflink p start_toks start_line ~image ~start
+        | Some _ as v -> v)
+    | '[' ->
+        let next' = next + 1 in
+        if next' <= line.last && p.i.[next'] = ']'
+        then try_collapsed_reflink p start_toks start_line ~image ~start else
+        let r = try_full_reflink_remainder p toks line ~image ~start:next in
+        begin match r with
+        | None -> try_shortcut_reflink p start_toks start_line ~image ~start
+        | Some None -> None (* Example 570 *)
+        | Some (Some _ as v) -> v
+        end
+    | c ->
+        try_shortcut_reflink p start_toks start_line ~image ~start
 
   (* The following sequence of mutually recursive functions define
      inline parsing. We have three passes over a paragraph's token
@@ -1586,20 +1571,36 @@ module Inline_struct = struct
     match find_link_text_tokens p start_toks start_line ~start with
     | None -> None
     | Some (toks, line, text_toks, text_last (* with ] delim *)) ->
-        let text, had_link =
-          let text_start =
-            let first = start + (if image then 2 else 1) in
-            let last =
-              if start_line == line then text_last - 1 else start_line.last
+        (* Parsing the text recurses into nested brackets, exponential
+           in depth unless it is done only for actual links. *)
+        match
+          find_link_def
+            p ~start ~start_toks ~start_line ~toks ~line ~text_last ~image
+        with
+        | None -> None
+        | Some (toks, endline, reference, last) ->
+            let text, had_link =
+              let text_start =
+                let first = start + (if image then 2 else 1) in
+                let last =
+                  if start_line == line then text_last - 1 else start_line.last
+                in
+                { start_line with first; last }
+              in
+              parse_tokens p text_toks text_start
             in
-            { start_line with first; last }
-          in
-          parse_tokens p text_toks text_start
-        in
-        if had_link && not image
-        then None (* Could try to keep render *) else
-        try_link_def
-          p ~start ~start_toks ~start_line ~toks ~line ~text_last ~image text
+            if had_link && not image
+            then None (* Could try to keep render *) else
+            let first = start in
+            let text =
+              let first_line = start_line and last_line = line in
+              inlines_inline p text ~first ~last:text_last ~first_line ~last_line
+            in
+            let link = { Inline.Link.text; reference } in
+            let first_line = start_line and last_line = endline in
+            let t = link_token p ~image ~first ~last ~first_line ~last_line link in
+            let had_link = not image && not p.nested_links in
+            Some (toks, endline, t, had_link)
 
   and first_pass p toks line =
     (* Parse inline atoms and links. Links are parsed here otherwise
